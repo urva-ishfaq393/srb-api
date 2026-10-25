@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin - Announcements</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 520px; margin: 32px auto; padding: 0 16px; color:#1d2433; }
+    @media (prefers-color-scheme: dark) { body { background:#12151c; color:#e8ecf4; } }
+    label { display:block; margin: 12px 0 4px; font-weight: 600; }
+    input, button { font: inherit; padding: 8px 12px; width: 100%; border-radius: 8px; border: 1px solid #c8ced9; }
+    button { margin-top: 12px; cursor: pointer; background:#2a5bd7; color:#fff; border-color:#2a5bd7; }
+    #state { margin-top: 16px; padding: 8px 12px; border-radius: 8px; background:#eef0f5; color:#1d2433; }
+    #log { margin-top: 12px; color:#667085; min-height: 1.4em; }
+  </style>
+</head>
+<body>
+  <h1>Admin announcements</h1>
+  <label for="key">Admin key</label>
+  <input id="key" type="password" autocomplete="off" />
+  <button id="connect">Connect</button>
+
+  <div id="state">Not connected</div>
+
+  <label for="msg">Message for all boards</label>
+  <input id="msg" maxlength="300" />
+  <button id="send" disabled>Send announcement</button>
+  <div id="log"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let socket = null;
+
+    $('connect').addEventListener('click', () => {
+      if (socket) socket.disconnect();
+      socket = io('/admin', { auth: { adminKey: $('key').value }, reconnection: false });
+
+      socket.on('connect', () => {
+        $('state').textContent = 'Connected as admin';
+        $('send').disabled = false;
+      });
+      // A wrong key arrives here with a clear message
+      socket.on('connect_error', (err) => {
+        $('state').textContent = 'Refused: ' + err.message;
+        $('send').disabled = true;
+      });
+      socket.on('disconnect', () => {
+        $('state').textContent = 'Disconnected';
+        $('send').disabled = true;
+      });
+    });
+
+    $('send').addEventListener('click', () => {
+      socket.emit('announce', $('msg').value, (res) => {
+        $('log').textContent = res.ok ? 'Sent.' : 'Error: ' + res.error;
+        if (res.ok) $('msg').value = '';
+      });
+    });
+  </script>
+</body>
+</html>

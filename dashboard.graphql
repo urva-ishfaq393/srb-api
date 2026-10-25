@@ -1,0 +1,20 @@
+# One request: the student's details AND all of their bookings
+# (with room name, date and start hour).
+query Dashboard($regNo: String!) {
+  student(regNo: $regNo) {
+    regNo
+    name
+    email
+    bookings {
+      slotId
+      roomCode
+      roomName
+      building
+      date
+      startHour
+    }
+  }
+}
+
+# Variables:
+# { "regNo": "FA23-BCS-045" }
